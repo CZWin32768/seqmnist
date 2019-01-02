@@ -1,1 +1,4 @@
 imageio
+torchtext
+torch
+tqdm
