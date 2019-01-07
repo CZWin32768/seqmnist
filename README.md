@@ -74,16 +74,16 @@ Progress: 0%, Train Perplexity: 5.7955
 
 1月2日更新：
 
-- 写完了seq2seq的模型代码 （CZW）encoder使用两层CNN，再通过pooling转化为序列，decoder还是用的GRU
-- 数据输入的部分（Dataset类），定义了seqmnist_dataset.SeqMnistDataset 和 seqmnist_dataset.SeqMnistExample 类型
+- 写完了seq2seq的模型代码, encoder使用两层CNN，再通过pooling转化为序列，decoder还是用的GRU （CZW）
+- 数据输入的部分（Dataset类），定义了seqmnist_dataset.SeqMnistDataset 和 seqmnist_dataset.SeqMnistExample 类型 （CZW）
 - 需要添加AutoEncoder的Loss，即重建图片（作业要求：无监督） （TODO）
-- 需要在解码过程中应用REINFORCE（作业要求：强化学习）（TODO） https://arxiv.org/pdf/1511.06732.pdf
+- 需要在解码过程中应用REINFORCE（作业要求：强化学习） https://arxiv.org/pdf/1511.06732.pdf （TODO）
 - 添加群智和进化算法（作业要求） （TODO）
 
 1月7日更新：
 
-- 重写了field类（field.py）以适应图片类型的输入（CZW）（因为seq2seq库是建立在torchtext基础上的，因此对mnist这种图片输入无能为力，这里我通过重写Filed类process函数来实现非文本类型预处理）
-- 重写了trainer (trainer.py)，因为原有的库的trainer也仅仅针对文本序列写的，这个针对图片输入稍作改动
+- 重写了field类（field.py）以适应图片类型的输入（因为seq2seq库是建立在torchtext基础上的，因此对mnist这种图片输入无能为力，这里我通过重写Filed类process函数来实现非文本类型预处理）（CZW）
+- 重写了trainer (trainer.py)，因为原有的库的trainer也仅仅针对文本序列写的，这个针对图片输入稍作改动 （CZW）
 - 需要写模型第三Evaluation (TODO)
 
 
