@@ -84,7 +84,8 @@ Progress: 0%, Train Perplexity: 5.7955
 
 - 重写了field类（field.py）以适应图片类型的输入（因为seq2seq库是建立在torchtext基础上的，因此对mnist这种图片输入无能为力，这里我通过重写Filed类process函数来实现非文本类型预处理）（CZW）
 - 重写了trainer (trainer.py)，因为原有的库的trainer也仅仅针对文本序列写的，这个针对图片输入稍作改动 （CZW）
-- 需要写模型第三Evaluation (TODO)
+- 经过调试与debug，已经可以在cpu上运行，但是GPU上还没有尝试过（CZW）
+- 需要写模型的 Evaluation ，现在只能显示困惑度，但是这个指标不够清晰(TODO)
 
 
 ## Author
