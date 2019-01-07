@@ -23,7 +23,7 @@ class EncoderCNN2D(nn.Module):
     self.pool2seq = nn.MaxPool1d(4, 4)
 
   
-  def forward(self, input_var):
+  def forward(self, input_var, input_lengths=None):
     """
     Applies a multi-layer CNN to an input sequence.
 

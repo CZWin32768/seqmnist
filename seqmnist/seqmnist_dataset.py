@@ -18,14 +18,15 @@ class SeqMnistExample(Example):
     label_str = fn[fn.find("_")+1:fn.find(".")]
     label = list(label_str)
     setattr(ex, "src", image)
-    setattr(ex, "trg", label)
+    setattr(ex, "tgt", label)
+    return ex
 
 class SeqMnistDataset(Dataset):
 
-  def __init__(self, path):
+  def __init__(self, path, fields):
     examples = []
     for fn in tqdm(os.listdir(path)):
       examples.append(SeqMnistExample.fromImgFile(
         os.path.join(path, fn)
       ))
-    super(SeqMnistDataset, self).__init__(examples, {})
+    super(SeqMnistDataset, self).__init__(examples, fields)
