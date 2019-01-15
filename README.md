@@ -87,7 +87,12 @@ Progress: 0%, Train Perplexity: 5.7955
 - 经过调试与debug，已经可以在cpu上运行，但是GPU上还没有尝试过（CZW）
 - 需要写模型的 Evaluation ，现在只能显示困惑度，但是这个指标不够清晰(TODO)
 
+1月15日更新：
 
-## Author
+- 解码部分添加了policy_gradient部分代码，实现了强化学习部分（ZHY）
+- 修改了seq2seq的evaluate代码，现在可以得到准确率（ZHY）
+- 目前模型准确率为25%左右
+
+##Author
 
 - Zewen Chi
