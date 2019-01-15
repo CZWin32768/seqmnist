@@ -96,3 +96,4 @@ Progress: 0%, Train Perplexity: 5.7955
 ##Author
 
 - Zewen Chi
+- Hongyu Zang
