@@ -2,3 +2,4 @@ imageio
 torchtext
 torch
 tqdm
+dill

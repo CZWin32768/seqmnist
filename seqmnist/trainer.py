@@ -7,13 +7,13 @@ import time
 import torch
 import torchtext
 from torch import optim
-
+from torch.autograd import Variable
+import torch.nn as nn
 import seq2seq
 from seq2seq.evaluator import Evaluator
 from seq2seq.loss import NLLLoss
 from seq2seq.optim import Optimizer
 from seq2seq.util.checkpoint import Checkpoint
-
 class SupervisedTrainer(object):
     """ The SupervisedTrainer class helps in setting up a training framework in a
     supervised setting.
@@ -45,8 +45,31 @@ class SupervisedTrainer(object):
         if not os.path.exists(self.expt_dir):
             os.makedirs(self.expt_dir)
         self.batch_size = batch_size
-
         self.logger = logging.getLogger(__name__)
+
+
+    def _pg_loss(self, input_variable, input_lengths, target_variable, model):
+        model.eval()
+        with torch.no_grad():
+            decoder_outputs, _, _ = model(input_variable, input_lengths, target_variable)
+        loss_fn = nn.NLLLoss()
+        softmax = nn.Softmax()
+        pg_loss = 0
+        batch_size = target_variable.size(0)
+        for step, step_output in enumerate(decoder_outputs):
+            # print(step_output[1])
+            # reward.eval_batch(step_output.contiguous().view(batch_size, -1), target_variable[:, step + 1])
+            for j in range(batch_size):
+                reward = loss_fn(step_output[j].view(1,-1),target_variable[j,step+1].view(1))
+
+                pg_loss += softmax(step_output[j])[target_variable[j, step]] * reward
+                # 由于reward用的是loss表示，当准的时候reward应该是最小的，所以-reward应该是最大的
+                # 由于loss是最小化，所以应该让loss = - -reward
+
+        # pg_loss = pg_loss / batch_size
+        model.train(True)
+        return pg_loss
+
 
     def _train_batch(self, input_variable, input_lengths, target_variable, model, teacher_forcing_ratio):
         loss = self.loss
@@ -55,11 +78,17 @@ class SupervisedTrainer(object):
                                                        teacher_forcing_ratio=teacher_forcing_ratio)
         # Get loss
         loss.reset()
+
         for step, step_output in enumerate(decoder_outputs):
             batch_size = target_variable.size(0)
             loss.eval_batch(step_output.contiguous().view(batch_size, -1), target_variable[:, step + 1])
+
         # Backward propagation
         model.zero_grad()
+
+        pg_loss = self._pg_loss(input_variable, input_lengths, target_variable, model)
+        loss.acc_loss += pg_loss
+
         loss.backward()
         self.optimizer.step()
 
@@ -85,14 +114,13 @@ class SupervisedTrainer(object):
         step = start_step
         step_elapsed = 0
         for epoch in range(start_epoch, n_epochs + 1):
+
             #log.debug("Epoch: %d, Step: %d" % (epoch, step))
             print("Epoch: %d, Step: %d" % (epoch, step))
-
             batch_generator = batch_iterator.__iter__()
             # consuming seen batches from previous training
             for _ in range((epoch - 1) * steps_per_epoch, step):
                 next(batch_generator)
-
             model.train(True)
             for batch in batch_generator:
                 step += 1

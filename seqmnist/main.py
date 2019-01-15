@@ -36,8 +36,8 @@ def build_model(tgt_field, max_len=50, hidden_size=200, bidirectional=False):
     sos_id=tgt_field.sos_id
   )
   model_obj = Seq2seq(encoder, decoder)
-  if torch.cuda.is_available():
-    model_obj.cuda()
+  # if torch.cuda.is_available():
+  #   model_obj.cuda()
   
   for param in model_obj.parameters():
     param.data.uniform_(-0.08, 0.08)
@@ -76,14 +76,14 @@ def conf():
   parser = argparse.ArgumentParser()
   parser.add_argument("--batch_size", default=32)
   parser.add_argument(
-    "--train_path", default="/home/czwin32768/res/mnist/seq-mnist/train")
+    "--train_path", default="./multi_mnist/train")
   parser.add_argument(
-    "--dev_path", default="/home/czwin32768/res/mnist/seq-mnist/test")
+    "--dev_path", default="./multi_mnist/test")
   parser.add_argument(
     "--expt_dir", default="./expt")
   parser.add_argument(
     "--print_every", default=5)
-  parser.add_argument("--num_epochs", default=6)
+  parser.add_argument("--num_epochs", default=20)
   return parser.parse_args()
 
 

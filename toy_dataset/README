@@ -1,0 +1,6 @@
+***************************************************************************
+The multi-mnist dataset is created by Zewen Chi based on the MNIST dataset.
+There are 50000 training examples and 2000 test examples labeled as `[No]_[label].png`
+***************************************************************************
+
+
