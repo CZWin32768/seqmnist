@@ -7,7 +7,7 @@ https://drive.google.com/open?id=1I8NbuUc0vF3igpCihhryVuiNd31nlwkh
 
 ## Requirements
 
-For `seq2seq` package, refer to https://github.com/zanghyu/pytorch-seq2seq.
+For `seq2seq` package, refer to https://github.com/CZWin32768/pytorch-seq2seq.
 
 ```
 imageio
@@ -77,7 +77,7 @@ Progress: 0%, Train Perplexity: 5.7955
 - 写完了seq2seq的模型代码, encoder使用两层CNN，再通过pooling转化为序列，decoder还是用的GRU （CZW）
 - 数据输入的部分（Dataset类），定义了seqmnist_dataset.SeqMnistDataset 和 seqmnist_dataset.SeqMnistExample 类型 （CZW）
 - 需要添加AutoEncoder的Loss，即重建图片（作业要求：无监督） （TODO）
-- 需要在解码过程中应用REINFORCE（作业要求：强化学习） https://arxiv.org/pdf/1511.06732.pdf （TODO）
+- 需要在解码过程中应用REINFORCE（作业要求：强化学习） https://arxiv.org/pdf/1511.06732.pdf 
 - 添加群智和进化算法（作业要求） （TODO）
 
 1月7日更新：
@@ -93,7 +93,13 @@ Progress: 0%, Train Perplexity: 5.7955
 - 修改了seq2seq的evaluate代码，现在可以得到准确率（ZHY）
 - 目前模型准确率为25%左右
 
-## Author
+1月17日更新：
+
+- encoder最后一层改为了全连接（ZHY）
+- decoder改为双向LSTM（ZHY）
+- 目前训练20个epoches模型准确率为81%
+
+##Author
 
 - Zewen Chi
 - Hongyu Zang
