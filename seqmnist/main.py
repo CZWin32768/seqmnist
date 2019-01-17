@@ -1,5 +1,6 @@
 import torch
 import torchtext
+import torch.nn.init as init
 import argparse
 
 
@@ -19,7 +20,7 @@ from seqmnist.trainer import SupervisedTrainer
 from seqmnist.field import SrcField, TgtField
 
 
-def build_model(tgt_field, max_len=50, hidden_size=200, bidirectional=False):
+def build_model(tgt_field, max_len=50, hidden_size=100, bidirectional=False):
   print("building model...")
   vocab:torchtext.vocab.Vocab = tgt_field.vocab
   print("vocab: ", vocab.stoi)
@@ -33,12 +34,14 @@ def build_model(tgt_field, max_len=50, hidden_size=200, bidirectional=False):
     use_attention=True,
     bidirectional=bidirectional,
     eos_id=tgt_field.eos_id,
-    sos_id=tgt_field.sos_id
+    sos_id=tgt_field.sos_id,
+    rnn_cell='lstm'
   )
   model_obj = Seq2seq(encoder, decoder)
   # if torch.cuda.is_available():
   #   model_obj.cuda()
-  
+  # for param in model_obj.parameters():
+  #   init.xavier_uniform(param.data)
   for param in model_obj.parameters():
     param.data.uniform_(-0.08, 0.08)
   
@@ -57,7 +60,7 @@ def build_dataset(args):
 
 def train(args):
   train_ds, dev_ds, src_field, tgt_field = build_dataset(args)
-  model = build_model(tgt_field)
+  model = build_model(tgt_field,bidirectional=True)
   trainer = SupervisedTrainer(
     loss = Perplexity(),
     batch_size=args.batch_size,
@@ -70,11 +73,13 @@ def train(args):
     data=train_ds,
     num_epochs=args.num_epochs,
     optimizer=None,
+    dev_data=dev_ds
   )
+
 
 def conf():
   parser = argparse.ArgumentParser()
-  parser.add_argument("--batch_size", default=32)
+  parser.add_argument("--batch_size", default=128)
   parser.add_argument(
     "--train_path", default="./multi_mnist/train")
   parser.add_argument(
@@ -84,6 +89,7 @@ def conf():
   parser.add_argument(
     "--print_every", default=5)
   parser.add_argument("--num_epochs", default=20)
+
   return parser.parse_args()
 
 

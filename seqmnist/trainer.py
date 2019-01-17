@@ -71,7 +71,8 @@ class SupervisedTrainer(object):
         return pg_loss
 
 
-    def _train_batch(self, input_variable, input_lengths, target_variable, model, teacher_forcing_ratio):
+    def _train_batch(self, input_variable, input_lengths, target_variable,
+                     model, teacher_forcing_ratio, use_pg_loss = True):
         loss = self.loss
         # Forward propagation
         decoder_outputs, decoder_hidden, other = model(input_variable, input_lengths, target_variable,
@@ -85,10 +86,9 @@ class SupervisedTrainer(object):
 
         # Backward propagation
         model.zero_grad()
-
-        pg_loss = self._pg_loss(input_variable, input_lengths, target_variable, model)
-        loss.acc_loss += pg_loss
-
+        if use_pg_loss:
+            pg_loss = self._pg_loss(input_variable, input_lengths, target_variable, model)
+            loss.acc_loss += pg_loss
         loss.backward()
         self.optimizer.step()
 
@@ -97,7 +97,6 @@ class SupervisedTrainer(object):
     def _train_epoches(self, data, model, n_epochs, start_epoch, start_step,
                        dev_data=None, teacher_forcing_ratio=0):
         log = self.logger
-
         print_loss_total = 0  # Reset every print_every
         epoch_loss_total = 0  # Reset every epoch
 
@@ -130,7 +129,8 @@ class SupervisedTrainer(object):
                 input_variables = getattr(batch, seq2seq.src_field_name)
                 target_variables = getattr(batch, seq2seq.tgt_field_name)
 
-                loss = self._train_batch(input_variables, None, target_variables, model, teacher_forcing_ratio)
+                loss = self._train_batch(input_variables, None, target_variables,
+                                         model, teacher_forcing_ratio, use_pg_loss=True)
 
                 # Record average loss
                 print_loss_total += loss
@@ -146,9 +146,10 @@ class SupervisedTrainer(object):
                     #log.info(log_msg)
                     print(log_msg)
 
-                #TODO checkpoint
+                # todo checkpoint
+
                 # Checkpoint
-                #if step % self.checkpoint_every == 0 or step == total_steps:
+                # if step % self.checkpoint_every == 0 or step == total_steps:
                 #    Checkpoint(model=model,
                 #               optimizer=self.optimizer,
                 #               epoch=epoch, step=step,

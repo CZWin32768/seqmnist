@@ -21,7 +21,7 @@ class EncoderCNN2D(nn.Module):
       stride=1)
     self.pool = nn.MaxPool2d(2, 2)
     self.pool2seq = nn.MaxPool1d(4, 4)
-
+    self.fc = nn.Linear(147,36)
   
   def forward(self, input_var, input_lengths=None):
     """
@@ -49,7 +49,10 @@ class EncoderCNN2D(nn.Module):
     x = x.view(batch_size, hidden_size, width)
 
     # (batch, 200, 147) -> (batch, 200, 36)
-    x = self.pool2seq(x)
+    # x = self.pool2seq(x)
+
+    x = self.fc(x)
+
 
     # (batch, 200, 36) -> (batch, 36, 200)
     output = x.transpose(1,2)
