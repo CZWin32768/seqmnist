@@ -3,3 +3,5 @@ torchtext
 torch
 tqdm
 dill
+six
+torchvision

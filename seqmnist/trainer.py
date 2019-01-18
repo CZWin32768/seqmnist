@@ -10,7 +10,7 @@ from torch import optim
 from torch.autograd import Variable
 import torch.nn as nn
 import seq2seq
-from seq2seq.evaluator import Evaluator
+from .evaluator import Evaluator
 from seq2seq.loss import NLLLoss
 from seq2seq.optim import Optimizer
 from seq2seq.util.checkpoint import Checkpoint
@@ -74,6 +74,8 @@ class SupervisedTrainer(object):
     def _train_batch(self, input_variable, input_lengths, target_variable,
                      model, teacher_forcing_ratio, use_pg_loss = True):
         loss = self.loss
+        input_variable = input_variable.cuda()
+        target_variable = target_variable.cuda()
         # Forward propagation
         decoder_outputs, decoder_hidden, other = model(input_variable, input_lengths, target_variable,
                                                        teacher_forcing_ratio=teacher_forcing_ratio)
@@ -100,7 +102,7 @@ class SupervisedTrainer(object):
         print_loss_total = 0  # Reset every print_every
         epoch_loss_total = 0  # Reset every epoch
 
-        device = None if torch.cuda.is_available() else -1
+        device = torch.device('cuda:0') if torch.cuda.is_available() else -1
         batch_iterator = torchtext.data.BucketIterator(
             dataset=data, batch_size=self.batch_size,
             sort=False, sort_within_batch=True,
@@ -171,6 +173,7 @@ class SupervisedTrainer(object):
 
             #log.info(log_msg)
             print(log_msg)
+            return accuracy
 
     def train(self, model, data, num_epochs=5,
               resume=False, dev_data=None,
@@ -215,7 +218,8 @@ class SupervisedTrainer(object):
 
         self.logger.info("Optimizer: %s, Scheduler: %s" % (self.optimizer.optimizer, self.optimizer.scheduler))
 
-        self._train_epoches(data, model, num_epochs,
+        acc = self._train_epoches(data, model, num_epochs,
                             start_epoch, step, dev_data=dev_data,
                             teacher_forcing_ratio=teacher_forcing_ratio)
-        return model
+        #return model,
+        return acc
