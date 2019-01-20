@@ -60,7 +60,7 @@ def build_dataset(train_path, dev_path):
 
 def train(args):
   train_ds, dev_ds, src_field, tgt_field = build_dataset(args.train_path, args.dev_path)
-  model = build_model(tgt_field,bidirectional=True)
+  model = build_model([22,76],[5,7],tgt_field,hidden_size = 76*7,bidirectional=False)
   trainer = SupervisedTrainer(
     loss = Perplexity(),
     batch_size=args.batch_size,
@@ -74,8 +74,10 @@ def train(args):
     data=train_ds,
     num_epochs=args.num_epochs,
     optimizer=None,
-    dev_data=dev_ds
+    dev_data=dev_ds,
+    device=0
   )
+  torch.save(model.state_dict(), '/home/mcis105/yuhongfei/AI_Course/seqmnist/models/best_model')
 
 def caculateLoss(x, *args):
   train_path, dev_path, batch_size, num_epochs, print_every = args
@@ -83,18 +85,25 @@ def caculateLoss(x, *args):
 
   ##get feature_nums and kernel_sizes
   feature_nums = []
-  feature_nums.append(round(x[0]))
-  feature_nums.append(round(x[1]))
+  feature_nums.append(int(round(x[0])))
+  feature_nums.append(int(round(x[1])))
 
   kernel_sizes = []
   kernel_sizes.append(x[2])
   kernel_sizes.append(x[3])
+  #print(kernel_sizes)
   for i in range(2):
     if int(kernel_sizes[i])%2 != 0:
-      kernel_sizes = int(kernel_sizes[i])
+      kernel_sizes[i] = int(kernel_sizes[i])
     else:
       kernel_sizes[i] = int(kernel_sizes[i]) + 1
-  model = build_model(feature_nums,kernel_sizes,tgt_field,bidirectional=True).cuda()
+  #print(feature_nums[0])
+  #print(kernel_sizes)
+  #nvmlInit()
+  #handle = nvmlDeviceGetHandleByIndex(0)
+  #info = nvmlDeviceGetMemoryInfo(handle)
+  device = int(x[-1])
+  model = build_model(feature_nums,kernel_sizes,tgt_field,hidden_size=feature_nums[1]*7,bidirectional=False).cuda(device)
   trainer = SupervisedTrainer(
     loss = Perplexity(),
     batch_size=batch_size,
@@ -102,12 +111,14 @@ def caculateLoss(x, *args):
     print_every=print_every
   )
   acc = trainer.train(
-    model=model.cuda(),
+    model=model,
     data=train_ds,
     num_epochs=num_epochs,
     optimizer=None,
-    dev_data=dev_ds
+    dev_data=dev_ds,
+    device=device
   )
+  torch.save(model.state_dict(), '/home/mcis105/yuhongfei/AI_Course/seqmnist/models/' + str(x))
   del trainer
   del model
   del train_ds, dev_ds, src_field, tgt_field
@@ -115,32 +126,33 @@ def caculateLoss(x, *args):
 
 
 def PSOtrain(args):
-  torch.cuda.set_device(0)
-  lb = [20, 20, 2, 2]
-  ub = [80, 80, 8, 8]
+  lb = [20, 50, 2, 2]
+  ub = [50, 80, 8, 8]
   vmax = [10, 10, 1, 1]
 
-  xopt1, fopt1 = pso(caculateLoss,(args.train_path, args.dev_path, args.batch_size, 28, args.print_every),
-      lb,ub,vmax,swarmsize=3,omega=0.792,phip=1.494,phig=1.494,maxiter=30,
-      minstep=0.001,debug=True,processes=3)
+  xopt1, fopt1 = pso(caculateLoss,(args.train_path, args.dev_path, args.batch_size, args.num_epochs, args.print_every),
+      lb,ub,vmax,swarmsize=8,omega=0.792,phip=1.494,phig=1.494,maxiter=30,
+      minstep=0.001,debug=True,processes=args.num_workers)
   print(xopt1)
   print('max_acc = ' + str(fopt1))
 
 def conf():
   parser = argparse.ArgumentParser()
-  parser.add_argument("--batch_size", default=128)
+  parser.add_argument("--batch_size", default=90)
   parser.add_argument(
-    "--train_path", default="./multi_mnist/train")
+    "--train_path", default="./data/multi_mnist/train")
   parser.add_argument(
-    "--dev_path", default="./multi_mnist/test")
+    "--dev_path", default="./data/multi_mnist/test")
   parser.add_argument(
     "--expt_dir", default="./expt")
   parser.add_argument(
-    "--print_every", default=5)
-  parser.add_argument("--num_epochs", default=30)
+    "--print_every", default=50)
+  parser.add_argument("--num_epochs", default=15)
+  parser.add_argument("--num_workers", default=1)
 
   return parser.parse_args()
 
 
 if __name__ == "__main__":
-  train(conf())
+  #train(conf())
+  PSOtrain(conf())

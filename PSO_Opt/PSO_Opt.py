@@ -2,8 +2,8 @@ import numpy as np
 from functools import partial
 import pickle
 
-def _obj_wrapper(func, args, kwargs, x):
-    return func(x, *args, **kwargs)
+def _obj_wrapper(func, args, x):
+    return func(x, *args)
 
 def pso(func, args, lb, ub, vmax,
         swarmsize=100, omega=0.5, phip=0.5, phig=0.5, maxiter=25,
@@ -70,16 +70,16 @@ def pso(func, args, lb, ub, vmax,
     ub = np.array(ub)
     assert np.all(ub > lb), 'All upper-bound values must be greater than lower-bound values'
 
-    vhigh = vmax
-    vlow = -vhigh
+    vhigh = np.array(vmax)
+    vlow = -1*vhigh
 
     # Initialize objective function
-    obj = partial(_obj_wrapper, func, args, None)
+    obj = partial(_obj_wrapper, func, args)
 
     # Initialize the multiprocessing module if necessary
     if processes > 1:
-        import multiprocessing
-        mp_pool = multiprocessing.Pool(processes)
+        from torch.multiprocessing import Pool, Process, set_start_method
+        set_start_method('spawn')
 
     # Initialize the particle swarm ############################################
     S = swarmsize
@@ -88,19 +88,30 @@ def pso(func, args, lb, ub, vmax,
     v = np.zeros_like(x)  # particle velocities
     p = np.zeros_like(x)  # best particle positions
     fx = np.zeros(S)  # current particle function values
-    fp = np.ones(S) * np.inf  # best particle function values
+    fp = np.zeros(S)  # best particle function values
     g = []  # best swarm position
-    fg = np.inf  # best swarm position starting value
-
+    fg = 0  # best swarm position starting value
+    #devices = [0 if x < S/2 else 1 for x in range(S)]
+    devices = [0 for x in range(S)]
+	
     # Initialize the particle's position
     x = lb + x * (ub - lb)
 
     # Calculate objective and constraints for each particle
+    
+    #historys = pickle.load(open('/home/mcis105/yuhongfei/AI_Course/seqmnist/0','rb'))
+    #x = np.array(historys['x'])
+    #v = np.array(historys['v'])
+    #fx = np.array(historys['fx'])
+
     if processes > 1:
-        fx = np.array(mp_pool.map(obj, x))
+        mp_pool = Pool(processes)
+        fx = np.array(mp_pool.map(obj, np.c_[x,devices]))
+        mp_pool.close()
+        mp_pool.join()
     else:
         for i in range(S):
-            fx[i] = obj(x[i, :])
+            fx[i] = obj(np.c_[x[i, :],devices[i])
 
 
     # Store particle's best position (if constraints are satisfied)
@@ -123,8 +134,9 @@ def pso(func, args, lb, ub, vmax,
 
     # Iterate until termination criterion met ##################################
     it = 1
-    historys = {}
+
     while it <= maxiter:
+        historys = {}
         historys['x'] = x
         historys['fx'] = fx
         historys['v'] = v
@@ -132,32 +144,43 @@ def pso(func, args, lb, ub, vmax,
         historys['fp'] = fp
         historys['g'] = g
         historys['fg'] = fg
-        pickle.dump(historys,file=open('../PSOResult/' + str(it - 1), 'w'))
+        pickle.dump(historys,file=open('/home/mcis105/yuhongfei/AI_Course/seqmnist/PSO/' + str(it - 1), 'wb'))
 
         rp = np.random.uniform(size=(S, D))
         rg = np.random.uniform(size=(S, D))
 
         # Update the particles velocities
         v = omega * v + phip * rp * (p - x) + phig * rg * (g - x)
+        print(v)
+        print(vhigh)
+        for i in range(S):
+            for j in range(len(v[0])):
+                if v[i][j]<vlow[j]:
+                    v[i][j] = vlow[j]
+                elif v[i][j]>vhigh[j]:
+                    v[i][j] = vhigh[j]
         # Update the particles' positions
         x = x + v
         # Correct for bound violations
         for i in range(S):
             for j in range(len(x[0])):
-                if x[i,j] < lb[j]:
-                    x[i, j] = lb[j] + lb[j] - x[i,j]
-                elif x[i,j] > ub[j]:
-                    x[i,j] = ub[j] + ub[j] - x[i,j]
+                if x[i][j] < lb[j]:
+                    x[i][j] = lb[j] + lb[j] - x[i][j]
+                elif x[i][j] > ub[j]:
+                    x[i][j] = ub[j] + ub[j] - x[i][j]
         #maskl = x < lb
         #masku = x > ub
         #x = x * (~np.logical_or(maskl, masku)) + lb * maskl + ub * masku
 
         # Update objectives and constraints
         if processes > 1:
-            fx = np.array(mp_pool.map(obj, x))
+            mp_pool = Pool(processes)
+            fx = np.array(mp_pool.map(obj, np.c_[x,devices]))
+            mp_pool.close()
+            mp_pool.join()
         else:
             for i in range(S):
-                fx[i] = obj(x[i, :])
+                fx[i] = obj(np.c_[x[i, :],devices[i])
 
         # Store particle's best position (if constraints are satisfied)
         i_update = fx > fp

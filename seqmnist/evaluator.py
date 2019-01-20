@@ -18,7 +18,7 @@ class Evaluator(object):
         self.loss = loss
         self.batch_size = batch_size
 
-    def evaluate(self, model, data):
+    def evaluate(self, model, data, device = -1):
         """ Evaluate a model on given dataset and return performance.
 
         Args:
@@ -35,11 +35,11 @@ class Evaluator(object):
         match = 0
         total = 0
 
-        device = torch.device('cuda:0') if torch.cuda.is_available() else -1
+        itdevice = torch.device('cuda:' + str(device)) if torch.cuda.is_available() else -1
         batch_iterator = torchtext.data.BucketIterator(
             dataset=data, batch_size=self.batch_size,
             sort=True, sort_key=lambda x: len(x.src),
-            device=device, train=False)
+            device=itdevice, train=False)
         tgt_vocab = data.fields[seq2seq.tgt_field_name].vocab
         pad = tgt_vocab.stoi[data.fields[seq2seq.tgt_field_name].pad_token]
 
@@ -49,8 +49,8 @@ class Evaluator(object):
 
                 target_variables = getattr(batch, seq2seq.tgt_field_name)
 
-                input_variables = input_variables.cuda()
-                target_variables = target_variables.cuda()
+                input_variables = input_variables.cuda(device)
+                target_variables = target_variables.cuda(device)
 
                 decoder_outputs, decoder_hidden, other = model(input_variables, None, target_variables)
 

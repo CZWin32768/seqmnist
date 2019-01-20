@@ -75,11 +75,11 @@ class CustomedEncoderCNN2D(nn.Module):
       stride=1,
       padding=int((kernel_sizes[0]-1)/2))
     self.conv2 = nn.Conv2d(
-      in_channels=20,
+      in_channels=featruemap_nums[0],
       out_channels=featruemap_nums[1],
       kernel_size=kernel_sizes[1],
       stride=1,
-      padding=int((kernel_sizes[0] - 1) / 2))
+      padding=int((kernel_sizes[1] - 1) / 2))
     self.pool = nn.MaxPool2d(2, 2)
     self.pool2seq = nn.MaxPool1d(4, 4)
     self.fc = nn.Linear(150, 36)
@@ -96,17 +96,23 @@ class CustomedEncoderCNN2D(nn.Module):
         - **hidden** (num_layers * num_directions, batch, hidden_size): variable containing the features in the hidden state h
     """
 
+    #print('start forward')    
     # (batch, 1, 28, 600) -> (batch, 50, 7, 150)
     x = input_var
     x = F.relu(self.conv1(x))
+    #print(x.shape)
     x = self.pool(x)
+    #print(x.shape)
     x = F.relu(self.conv2(x))
+    #print(x.shape)
     x = self.pool(x)
+    #print(x.shape)
 
     # (batch, 50, 7, 150) -> (batch, 350, 150)
     batch_size, channel_num, height, width = x.shape
     hidden_size = channel_num * height
     x = x.view(batch_size, hidden_size, width)
+    #print(x.shape)
 
     # (batch, 350, 150) -> (batch, 350, 36)
     # x = self.pool2seq(x)

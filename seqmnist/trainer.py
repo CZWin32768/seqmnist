@@ -72,15 +72,21 @@ class SupervisedTrainer(object):
 
 
     def _train_batch(self, input_variable, input_lengths, target_variable,
-                     model, teacher_forcing_ratio, use_pg_loss = True):
+                     model, teacher_forcing_ratio, use_pg_loss = True,
+                     device = -1):
         loss = self.loss
-        input_variable = input_variable.cuda()
-        target_variable = target_variable.cuda()
+        input_variable = input_variable.cuda(device)
+        target_variable = target_variable.cuda(device)
+        #print('startBatch')
+        #print(input_variable.shape)
+        #print(target_variable.shape)
+
         # Forward propagation
         decoder_outputs, decoder_hidden, other = model(input_variable, input_lengths, target_variable,
                                                        teacher_forcing_ratio=teacher_forcing_ratio)
         # Get loss
         loss.reset()
+        #print('EndBatch')
 
         for step, step_output in enumerate(decoder_outputs):
             batch_size = target_variable.size(0)
@@ -97,17 +103,19 @@ class SupervisedTrainer(object):
         return loss.get_loss()
 
     def _train_epoches(self, data, model, n_epochs, start_epoch, start_step,
-                       dev_data=None, teacher_forcing_ratio=0):
+                       dev_data=None, teacher_forcing_ratio=0,
+                       device = -1):
         log = self.logger
         print_loss_total = 0  # Reset every print_every
         epoch_loss_total = 0  # Reset every epoch
+        #print('startTrain')
 
-        device = torch.device('cuda:0') if torch.cuda.is_available() else -1
+        itdevice = torch.device('cuda:' + str(device)) if torch.cuda.is_available() else -1
         batch_iterator = torchtext.data.BucketIterator(
             dataset=data, batch_size=self.batch_size,
             sort=False, sort_within_batch=True,
             sort_key=lambda x: len(x.src),
-            device=device, repeat=False)
+            device=itdevice, repeat=False)
 
         steps_per_epoch = len(batch_iterator)
         total_steps = steps_per_epoch * n_epochs
@@ -132,7 +140,8 @@ class SupervisedTrainer(object):
                 target_variables = getattr(batch, seq2seq.tgt_field_name)
 
                 loss = self._train_batch(input_variables, None, target_variables,
-                                         model, teacher_forcing_ratio, use_pg_loss=True)
+                                         model, teacher_forcing_ratio, use_pg_loss=True,
+                                         device = device)
 
                 # Record average loss
                 print_loss_total += loss
@@ -164,7 +173,7 @@ class SupervisedTrainer(object):
             epoch_loss_total = 0
             log_msg = "Finished epoch %d: Train %s: %.4f" % (epoch, self.loss.name, epoch_loss_avg)
             if dev_data is not None:
-                dev_loss, accuracy = self.evaluator.evaluate(model, dev_data)
+                dev_loss, accuracy = self.evaluator.evaluate(model, dev_data, device=device)
                 self.optimizer.update(dev_loss, epoch)
                 log_msg += ", Dev %s: %.4f, Accuracy: %.4f" % (self.loss.name, dev_loss, accuracy)
                 model.train(mode=True)
@@ -173,11 +182,12 @@ class SupervisedTrainer(object):
 
             #log.info(log_msg)
             print(log_msg)
-            return accuracy
+        return accuracy
 
     def train(self, model, data, num_epochs=5,
               resume=False, dev_data=None,
-              optimizer=None, teacher_forcing_ratio=0):
+              optimizer=None, teacher_forcing_ratio=0,
+              device = -1):
         """ Run training for a given model.
 
         Args:
@@ -190,6 +200,7 @@ class SupervisedTrainer(object):
             optimizer (seq2seq.optim.Optimizer, optional): optimizer for training
                (default: Optimizer(pytorch.optim.Adam, max_grad_norm=5))
             teacher_forcing_ratio (float, optional): teaching forcing ratio (default 0)
+            device: use which device to train, -1 for cpu
         Returns:
             model (seq2seq.models): trained model.
         """
@@ -220,6 +231,7 @@ class SupervisedTrainer(object):
 
         acc = self._train_epoches(data, model, num_epochs,
                             start_epoch, step, dev_data=dev_data,
-                            teacher_forcing_ratio=teacher_forcing_ratio)
+                            teacher_forcing_ratio=teacher_forcing_ratio,
+                            device=device)
         #return model,
         return acc

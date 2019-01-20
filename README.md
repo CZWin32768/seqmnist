@@ -14,6 +14,9 @@ imageio
 torchtext
 torch
 tqdm
+dill
+six
+torchvision
 ```
 
 ## Component
@@ -70,13 +73,13 @@ Progress: 0%, Train Perplexity: 5.7955
 
 12月21日：
 
+- 使用VAE生成了额外的数据（YHF 作业要求：无监督学习）
 - 造了seq-mnist数据集（CZW）
 
 1月2日更新：
 
 - 写完了seq2seq的模型代码, encoder使用两层CNN，再通过pooling转化为序列，decoder还是用的GRU （CZW）
 - 数据输入的部分（Dataset类），定义了seqmnist_dataset.SeqMnistDataset 和 seqmnist_dataset.SeqMnistExample 类型 （CZW）
-- 需要添加AutoEncoder的Loss，即重建图片（作业要求：无监督） （TODO）
 - 需要在解码过程中应用REINFORCE（作业要求：强化学习） https://arxiv.org/pdf/1511.06732.pdf 
 - 添加群智和进化算法（作业要求） （TODO）
 
@@ -97,9 +100,26 @@ Progress: 0%, Train Perplexity: 5.7955
 
 - encoder最后一层改为了全连接（ZHY）
 - decoder改为双向LSTM（ZHY）
-- 目前训练20个epoches模型准确率为81%
+- 目前训练20个epoch模型准确率为81%
+
+1月18日更新：
+
+- 更改了encoder使其能够自定义卷积核数量以及大小以方便PSO算法来更新（YHF）
+
+- 添加了使用PSO来优化encoder网络卷积核数量以及大小的代码（YHF）
+
+  注：本分支，该代码为GPU代码，如需使用CPU运行请把相关cuda代码注释掉，请运行根目录下的main.py，不要运行seqminist目录下的mian.py
+
+  运行方法 `python main.py --batch_size <batch_size> --train_path <训练集路径> --dev_path <测试集路径> --num_epochs <每个模型训练的epoch数> --num_workers <并行运行的进程数量>`
+
+- 测试了原网络训练30个epoch的准确率为84%，其encoder的两层卷积核的数量及大小为[20,50],[5,5]
+
+1月20日更新：
+
+- 使用8个粒子，迭代10次得到的最优的模型参数为[22,76],[5,7]，改模型训练23个epoch后准确率为91%，有明显提升
 
 ##Author
 
 - Zewen Chi
 - Hongyu Zang
+- Hongfei Yu
