@@ -70,7 +70,7 @@ Progress: 0%, Train Perplexity: 5.7955
 
 12月21日：
 
-- 使用VAE生成了额外的数据（作业要求：无监督学习）
+- 使用VAE生成了额外的数据（YHF 作业要求：无监督学习）
 - 造了seq-mnist数据集（CZW）
 
 1月2日更新：
