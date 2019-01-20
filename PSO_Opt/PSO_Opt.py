@@ -144,7 +144,7 @@ def pso(func, args, lb, ub, vmax,
         historys['fp'] = fp
         historys['g'] = g
         historys['fg'] = fg
-        pickle.dump(historys,file=open('/home/mcis105/yuhongfei/AI_Course/seqmnist/PSO/' + str(it - 1), 'wb'))
+        #pickle.dump(historys,file=open('/home/mcis105/yuhongfei/AI_Course/seqmnist/PSO/' + str(it - 1), 'wb'))
 
         rp = np.random.uniform(size=(S, D))
         rg = np.random.uniform(size=(S, D))

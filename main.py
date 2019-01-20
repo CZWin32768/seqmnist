@@ -118,7 +118,7 @@ def caculateLoss(x, *args):
     dev_data=dev_ds,
     device=device
   )
-  torch.save(model.state_dict(), '/home/mcis105/yuhongfei/AI_Course/seqmnist/models/' + str(x))
+  #torch.save(model.state_dict(), '/home/mcis105/yuhongfei/AI_Course/seqmnist/models/' + str(x))
   del trainer
   del model
   del train_ds, dev_ds, src_field, tgt_field
